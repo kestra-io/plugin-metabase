@@ -1,0 +1,5 @@
+group: io.kestra.plugin.metabase.cards
+name: "cards"
+title: "Cards"
+description: "Tasks for executing saved questions (cards) in Metabase"
+body: ""
