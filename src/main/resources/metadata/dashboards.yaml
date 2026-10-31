@@ -1,0 +1,5 @@
+group: io.kestra.plugin.metabase.dashboards
+name: "dashboards"
+title: "Dashboards"
+description: "Tasks and triggers for Metabase dashboards"
+body: ""

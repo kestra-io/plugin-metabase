@@ -1,0 +1,5 @@
+group: io.kestra.plugin.metabase.queries
+name: "queries"
+title: "Queries"
+description: "Tasks for executing native SQL or dataset queries in Metabase"
+body: ""

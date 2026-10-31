@@ -1,16 +1,15 @@
-This is the Kestra plugin template. Use it as a starting point for building a new plugin.
+The Metabase plugin allows you to orchestrate and automate [Metabase](https://www.metabase.com/) business intelligence operations within Kestra workflows.
 
-## What this template ships
+## Features
 
-- `Example` is a sample `RunnableTask` that reverses an input string.
-- `Trigger` is a sample polling trigger that fires an execution at random.
+- **Databases**: Synchronize database schemas and rescan field values after ELT or ETL jobs complete (`databases.SyncSchema`, `databases.RescanValues`).
+- **Cards & Questions**: Execute saved cards/questions (`cards.Run`) and capture results into Kestra outputs or store them in Kestra internal storage.
+- **Queries**: Execute native SQL queries (`queries.Run`) against your Metabase data sources directly.
+- **Dashboards**: Fetch dashboard metadata and card configurations (`dashboards.Get`, `dashboards.List`), and trigger executions when dashboards are created or updated (`dashboards.Trigger`).
 
-## How to build your plugin
+## Authentication
 
-1. Rename the package `io.kestra.plugin.metabase` to your own, for example `io.kestra.plugin.myservice`.
-2. Update `group`, `name`, `title`, and `description` in `src/main/resources/metadata/index.yaml`.
-3. Replace `src/main/resources/icons/plugin-icon.svg` with your service's icon.
-4. Replace the `Example` and `Trigger` classes with your real tasks and triggers.
-5. Replace this how-to with documentation for your plugin.
-
-Run `./gradlew lintPluginDocs` before pushing to validate the plugin documentation.
+All tasks in this plugin support:
+- `apiKey`: Metabase API Key passed in the `x-api-key` header (recommended).
+- `sessionToken`: Metabase Session Token passed in the `X-Metabase-Session` header.
+- `username` & `password`: Automatically obtains a session token via `POST /api/session`.

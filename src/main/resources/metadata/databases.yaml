@@ -1,0 +1,5 @@
+group: io.kestra.plugin.metabase.databases
+name: "databases"
+title: "Databases"
+description: "Tasks for Metabase database metadata synchronization and value rescanning"
+body: ""
