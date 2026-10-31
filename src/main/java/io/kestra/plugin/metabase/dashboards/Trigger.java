@@ -103,7 +103,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
     )
     @PluginProperty(group = "connection")
     @Builder.Default
-    private Property<Duration> timeout = Property.of(Duration.ofSeconds(60));
+    private Property<Duration> timeout = Property.ofValue(Duration.ofSeconds(60));
 
     @Schema(
         title = "Polling interval",
@@ -119,7 +119,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
     )
     @PluginProperty(group = "execution")
     @Builder.Default
-    private Property<Boolean> onStartup = Property.of(false);
+    private Property<Boolean> onStartup = Property.ofValue(false);
 
     @Override
     public Duration getInterval() {

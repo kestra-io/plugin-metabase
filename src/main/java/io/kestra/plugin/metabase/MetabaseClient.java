@@ -51,8 +51,8 @@ public class MetabaseClient implements Closeable {
         HttpConfiguration.HttpConfigurationBuilder configBuilder = HttpConfiguration.builder();
         if (timeout != null) {
             configBuilder.timeout(TimeoutConfiguration.builder()
-                .connectTimeout(Property.of(timeout))
-                .readIdleTimeout(Property.of(timeout))
+                .connectTimeout(Property.ofValue(timeout))
+                .readIdleTimeout(Property.ofValue(timeout))
                 .build());
         }
 

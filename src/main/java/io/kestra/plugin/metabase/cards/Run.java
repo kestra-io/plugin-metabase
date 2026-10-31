@@ -89,7 +89,7 @@ public class Run extends AbstractMetabaseTask implements RunnableTask<QueryOutpu
     )
     @PluginProperty(group = "processing")
     @Builder.Default
-    private Property<FetchType> fetchType = Property.of(FetchType.FETCH);
+    private Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
     @Override
     public QueryOutput run(RunContext runContext) throws Exception {

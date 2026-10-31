@@ -63,7 +63,7 @@ public abstract class AbstractMetabaseTask extends Task {
     )
     @PluginProperty(group = "connection")
     @Builder.Default
-    protected Property<Duration> timeout = Property.of(Duration.ofSeconds(60));
+    protected Property<Duration> timeout = Property.ofValue(Duration.ofSeconds(60));
 
     /**
      * Builds and returns a configured, authenticated MetabaseClient.
