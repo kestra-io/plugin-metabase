@@ -10,6 +10,7 @@ import io.kestra.core.http.client.configurations.TimeoutConfiguration;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.metabase.models.SessionResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Closeable;
@@ -89,12 +90,12 @@ public class MetabaseClient implements Closeable {
                 + response.getStatus().getCode() + ", body: " + response.getBody());
         }
 
-        Map<String, Object> sessionResponse = MAPPER.readValue(response.getBody(), JacksonMapper.MAP_TYPE_REFERENCE);
-        Object id = sessionResponse.get("id");
+        SessionResponse sessionResponse = MAPPER.readValue(response.getBody(), SessionResponse.class);
+        String id = sessionResponse != null ? sessionResponse.getId() : null;
         if (id == null) {
             throw new IllegalStateException("Metabase session response did not contain session id: " + response.getBody());
         }
-        this.sessionToken = id.toString();
+        this.sessionToken = id;
         runContext.logger().debug("Successfully authenticated session token with Metabase.");
     }
 

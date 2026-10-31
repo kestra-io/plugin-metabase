@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
+import io.kestra.plugin.metabase.models.DashboardResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -61,17 +62,18 @@ public class Get extends AbstractMetabaseTask implements RunnableTask<Get.Output
         Integer renderedDashboardId = runContext.render(this.dashboardId).as(Integer.class).orElseThrow();
         runContext.logger().info("Fetching Metabase dashboard ID {}", renderedDashboardId);
 
-        Map<String, Object> dashboard;
+        DashboardResponse dashboardResponse;
         try (MetabaseClient client = createClient(runContext)) {
-            dashboard = client.get("/api/dashboard/" + renderedDashboardId, new TypeReference<Map<String, Object>>() {});
+            dashboardResponse = client.get("/api/dashboard/" + renderedDashboardId, DashboardResponse.class);
         }
 
+        Map<String, Object> dashboard = dashboardResponse != null ? dashboardResponse.toMap() : Collections.emptyMap();
         java.util.List<Map<String, Object>> cards = Collections.emptyList();
-        if (dashboard != null) {
-            if (dashboard.get("dashcards") instanceof java.util.List<?> list) {
-                cards = (java.util.List<Map<String, Object>>) list;
-            } else if (dashboard.get("ordered_cards") instanceof java.util.List<?> list) {
-                cards = (java.util.List<Map<String, Object>>) list;
+        if (dashboardResponse != null) {
+            if (dashboardResponse.getDashcards() != null) {
+                cards = dashboardResponse.getDashcards();
+            } else if (dashboardResponse.getOrderedCards() != null) {
+                cards = dashboardResponse.getOrderedCards();
             }
         }
 

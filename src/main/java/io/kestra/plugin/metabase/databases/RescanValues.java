@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
+import io.kestra.plugin.metabase.models.DatabaseActionResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -57,7 +58,7 @@ public class RescanValues extends AbstractMetabaseTask implements RunnableTask<R
         runContext.logger().info("Triggering field values rescan for Metabase database ID {}", renderedDatabaseId);
 
         try (MetabaseClient client = createClient(runContext)) {
-            client.post("/api/database/" + renderedDatabaseId + "/rescan_values", null);
+            client.post("/api/database/" + renderedDatabaseId + "/rescan_values", null, DatabaseActionResponse.class);
         }
 
         return Output.builder()

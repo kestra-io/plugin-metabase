@@ -12,6 +12,7 @@ import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
 import io.kestra.plugin.metabase.QueryOutput;
 import io.kestra.plugin.metabase.QueryOutputHelper;
+import io.kestra.plugin.metabase.models.QueryResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -124,16 +125,16 @@ public class Run extends AbstractMetabaseTask implements RunnableTask<QueryOutpu
             "native", nativePayload
         );
 
-        Map<String, Object> responseMap;
+        QueryResponse response;
         try (MetabaseClient client = createClient(runContext)) {
-            responseMap = client.post(
+            response = client.post(
                 "/api/dataset",
                 requestBody,
-                new TypeReference<Map<String, Object>>() {}
+                QueryResponse.class
             );
         }
 
-        List<Map<String, Object>> records = QueryOutputHelper.parseRows(responseMap);
+        List<Map<String, Object>> records = QueryOutputHelper.parseRows(response);
         runContext.logger().debug("Extracted {} rows from dataset query on database ID {}", records.size(), renderedDatabaseId);
 
         return QueryOutputHelper.processOutput(runContext, records, renderedFetchType);

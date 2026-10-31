@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
+import io.kestra.plugin.metabase.models.DatabaseActionResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -57,7 +58,7 @@ public class SyncSchema extends AbstractMetabaseTask implements RunnableTask<Syn
         runContext.logger().info("Triggering schema sync for Metabase database ID {}", renderedDatabaseId);
 
         try (MetabaseClient client = createClient(runContext)) {
-            client.post("/api/database/" + renderedDatabaseId + "/sync_schema", null);
+            client.post("/api/database/" + renderedDatabaseId + "/sync_schema", null, DatabaseActionResponse.class);
         }
 
         return Output.builder()

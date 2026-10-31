@@ -12,6 +12,7 @@ import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
 import io.kestra.plugin.metabase.QueryOutput;
 import io.kestra.plugin.metabase.QueryOutputHelper;
+import io.kestra.plugin.metabase.models.QueryResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -28,7 +29,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Schema(
     title = "Run a saved Metabase question",
-    description = "Executes a saved Metabase question (`POST /api/card/{id}/query`) and returns or stores the resulting rows."
+    description = "Executes a saved Metabase question (`POST /api/card/{id}/query`) and returns or stores the resulting rows. Note that Metabase applies default query result-size limits for visualization/browser queries (typically up to 2,000 unaggregated rows or up to 10,000 aggregated rows)."
 )
 @Plugin(
     examples = {
@@ -105,16 +106,16 @@ public class Run extends AbstractMetabaseTask implements RunnableTask<QueryOutpu
             requestBody.put("parameters", renderedParameters);
         }
 
-        Map<String, Object> responseMap;
+        QueryResponse response;
         try (MetabaseClient client = createClient(runContext)) {
-            responseMap = client.post(
+            response = client.post(
                 "/api/card/" + renderedCardId + "/query",
                 requestBody,
-                new TypeReference<Map<String, Object>>() {}
+                QueryResponse.class
             );
         }
 
-        List<Map<String, Object>> records = QueryOutputHelper.parseRows(responseMap);
+        List<Map<String, Object>> records = QueryOutputHelper.parseRows(response);
         runContext.logger().debug("Extracted {} rows from saved question ID {}", records.size(), renderedCardId);
 
         return QueryOutputHelper.processOutput(runContext, records, renderedFetchType);

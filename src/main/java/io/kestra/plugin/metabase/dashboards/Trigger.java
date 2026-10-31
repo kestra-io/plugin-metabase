@@ -13,6 +13,7 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.plugin.metabase.MetabaseClient;
+import io.kestra.plugin.metabase.models.DashboardResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -145,7 +146,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         Optional<KVValue> currentKv = kvStore.getValue(watermarkKey);
         String lastWatermark = currentKv.map(v -> v.value() != null ? v.value().toString() : null).orElse(null);
 
-        java.util.List<Map<String, Object>> allDashboards;
+        java.util.List<DashboardResponse> allDashboards;
         try (MetabaseClient client = new MetabaseClient(
             runContext,
             renderedUrl,
@@ -155,7 +156,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
             renderedPassword,
             renderedTimeout
         )) {
-            allDashboards = client.get("/api/dashboard", new TypeReference<java.util.List<Map<String, Object>>>() {});
+            allDashboards = client.get("/api/dashboard", new TypeReference<java.util.List<DashboardResponse>>() {});
         }
 
         if (allDashboards == null || allDashboards.isEmpty()) {
@@ -175,18 +176,19 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
                 return Optional.empty();
             }
 
+            java.util.List<Map<String, Object>> dashboardMaps = allDashboards.stream().map(DashboardResponse::toMap).toList();
             Output output = Output.builder()
-                .dashboards(allDashboards)
-                .size(allDashboards.size())
+                .dashboards(dashboardMaps)
+                .size(dashboardMaps.size())
                 .build();
             return Optional.of(TriggerService.generateExecution(this, conditionContext, context, output));
         }
 
         // Subsequent poll: filter dashboards newer than lastWatermark
-        java.util.List<Map<String, Object>> changedDashboards = new ArrayList<>();
+        java.util.List<DashboardResponse> changedDashboards = new ArrayList<>();
         String newMaxTimestamp = lastWatermark;
 
-        for (Map<String, Object> dashboard : allDashboards) {
+        for (DashboardResponse dashboard : allDashboards) {
             String ts = getDashboardTimestamp(dashboard);
             if (ts != null && ts.compareTo(lastWatermark) > 0) {
                 changedDashboards.add(dashboard);
@@ -204,26 +206,25 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         kvStore.put(watermarkKey, new KVValueAndMetadata(null, newMaxTimestamp));
         runContext.logger().info("Found {} updated/created dashboards. Advanced watermark to {}", changedDashboards.size(), newMaxTimestamp);
 
+        java.util.List<Map<String, Object>> changedDashboardMaps = changedDashboards.stream().map(DashboardResponse::toMap).toList();
         Output output = Output.builder()
-            .dashboards(changedDashboards)
-            .size(changedDashboards.size())
+            .dashboards(changedDashboardMaps)
+            .size(changedDashboardMaps.size())
             .build();
 
         return Optional.of(TriggerService.generateExecution(this, conditionContext, context, output));
     }
 
-    private String getDashboardTimestamp(Map<String, Object> dashboard) {
+    private String getDashboardTimestamp(DashboardResponse dashboard) {
         if (dashboard == null) return null;
-        Object updatedAt = dashboard.get("updated_at");
-        if (updatedAt != null) return updatedAt.toString();
-        Object createdAt = dashboard.get("created_at");
-        if (createdAt != null) return createdAt.toString();
+        if (dashboard.getUpdatedAt() != null) return dashboard.getUpdatedAt();
+        if (dashboard.getCreatedAt() != null) return dashboard.getCreatedAt();
         return null;
     }
 
-    private String findMaxTimestamp(java.util.List<Map<String, Object>> dashboards) {
+    private String findMaxTimestamp(java.util.List<DashboardResponse> dashboards) {
         String max = null;
-        for (Map<String, Object> dashboard : dashboards) {
+        for (DashboardResponse dashboard : dashboards) {
             String ts = getDashboardTimestamp(dashboard);
             if (ts != null && (max == null || ts.compareTo(max) > 0)) {
                 max = ts;

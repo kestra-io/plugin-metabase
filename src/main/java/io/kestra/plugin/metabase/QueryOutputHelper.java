@@ -3,6 +3,7 @@ package io.kestra.plugin.metabase;
 import io.kestra.core.models.tasks.common.FetchType;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.plugin.metabase.models.QueryResponse;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -13,21 +14,32 @@ import java.util.*;
 
 public class QueryOutputHelper {
 
+    public static List<Map<String, Object>> parseRows(QueryResponse queryResult) {
+        if (queryResult == null || queryResult.getData() == null) {
+            return Collections.emptyList();
+        }
+        return parseData(queryResult.getData().getCols(), queryResult.getData().getRows());
+    }
+
     @SuppressWarnings("unchecked")
     public static List<Map<String, Object>> parseRows(Map<String, Object> queryResult) {
-        List<Map<String, Object>> records = new ArrayList<>();
         if (queryResult == null) {
-            return records;
+            return Collections.emptyList();
         }
 
         Map<String, Object> data = (Map<String, Object>) queryResult.get("data");
         if (data == null) {
-            return records;
+            return Collections.emptyList();
         }
 
         List<Map<String, Object>> cols = (List<Map<String, Object>>) data.get("cols");
         List<List<Object>> rows = (List<List<Object>>) data.get("rows");
 
+        return parseData(cols, rows);
+    }
+
+    private static List<Map<String, Object>> parseData(List<Map<String, Object>> cols, List<List<Object>> rows) {
+        List<Map<String, Object>> records = new ArrayList<>();
         if (cols == null || rows == null) {
             return records;
         }

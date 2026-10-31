@@ -7,10 +7,12 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.metabase.AbstractMetabaseTask;
 import io.kestra.plugin.metabase.MetabaseClient;
+import io.kestra.plugin.metabase.models.DashboardResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Collections;
 import java.util.Map;
 
 @SuperBuilder
@@ -46,12 +48,16 @@ public class List extends AbstractMetabaseTask implements RunnableTask<List.Outp
     public Output run(RunContext runContext) throws Exception {
         runContext.logger().info("Fetching list of Metabase dashboards");
 
-        java.util.List<Map<String, Object>> dashboards;
+        java.util.List<DashboardResponse> dashboardResponses;
         try (MetabaseClient client = createClient(runContext)) {
-            dashboards = client.get("/api/dashboard", new TypeReference<java.util.List<Map<String, Object>>>() {});
+            dashboardResponses = client.get("/api/dashboard", new TypeReference<java.util.List<DashboardResponse>>() {});
         }
 
-        int count = dashboards != null ? dashboards.size() : 0;
+        java.util.List<Map<String, Object>> dashboards = dashboardResponses != null
+            ? dashboardResponses.stream().map(DashboardResponse::toMap).toList()
+            : Collections.emptyList();
+
+        int count = dashboards.size();
         runContext.logger().info("Retrieved {} Metabase dashboards", count);
 
         return Output.builder()

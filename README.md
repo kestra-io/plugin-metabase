@@ -53,6 +53,10 @@ Provides tasks and triggers under `io.kestra.plugin.metabase`:
 - `io.kestra.plugin.metabase.cards.Run`: Execute a saved question (card) by ID with support for `FETCH_ONE`, `FETCH`, and `STORE` output modes.
 - `io.kestra.plugin.metabase.queries.Run`: Execute a native SQL/dataset query directly against a Metabase database.
 
+> [!NOTE]
+> **Query Result Size Limits:**
+> When executing saved questions via `POST /api/card/{id}/query`, Metabase returns results formatted for visualization/browser display, which Metabase limits by default (typically up to 2,000 rows for unaggregated queries or up to 10,000 rows for aggregated queries, governed by Metabase's `max-results-bare-rows` setting). For native SQL queries via `io.kestra.plugin.metabase.queries.Run`, query limits can also be controlled directly within the SQL query text. For details on Metabase query execution constraints, refer to the [Metabase API documentation](https://www.metabase.com/docs/latest/api-documentation).
+
 ### Databases
 - `io.kestra.plugin.metabase.databases.SyncSchema`: Trigger an asynchronous schema synchronization (`POST /api/database/{id}/sync_schema`).
 - `io.kestra.plugin.metabase.databases.RescanValues`: Trigger an asynchronous field values rescan (`POST /api/database/{id}/rescan_values`).
@@ -65,7 +69,7 @@ Provides tasks and triggers under `io.kestra.plugin.metabase`:
 ## Authentication
 
 All tasks support multiple authentication methods:
-- **API Key** (`apiKey`): Metabase API key (recommended).
+- **API Key** (`apiKey`): Metabase API key (recommended). **Requires Metabase v0.47 or later** (see [Metabase API Keys documentation](https://www.metabase.com/docs/latest/people-and-groups/api-keys)).
 - **Session Token** (`sessionToken`): Active session token (`X-Metabase-Session`).
 - **Username & Password** (`username`, `password`): Automatically logs in via `POST /api/session` and authenticates requests.
 
