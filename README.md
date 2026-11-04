@@ -37,16 +37,67 @@
 
 # Kestra Metabase Plugin
 
+This plugin integrates [Metabase](https://www.metabase.com/) business intelligence platform into [Kestra](https://kestra.io/) workflows.
+
 ## Why
 
-- What user problem does this solve? Teams need a concrete starting point for building and validating new Kestra plugins without recreating the same project scaffolding from scratch.
-- Why would a team adopt this plugin in a workflow? It gives plugin authors a ready-made reference repo they can adapt alongside their own build, test, and publishing workflow.
-- What operational/business outcome does it enable? It shortens plugin delivery time, reduces setup mistakes, and makes internal or partner plugin development more repeatable.
+Refresh Metabase after a pipeline loads new tables, pull the rows of a saved question or a native query into a flow, and start a flow when a dashboard changes.
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.metabase`.
-- Includes classes such as `Example`, `Trigger`.
+Provides tasks and triggers under `io.kestra.plugin.metabase`:
+
+### Cards & Queries
+- `io.kestra.plugin.metabase.cards.Run`: Execute a saved question (card) by ID with support for `FETCH_ONE`, `FETCH`, and `STORE` output modes.
+- `io.kestra.plugin.metabase.queries.Run`: Execute a native SQL/dataset query directly against a Metabase database.
+
+> [!NOTE]
+> **Query result size limits:** `FETCH`, `FETCH_ONE` and `NONE` use `POST /api/card/{id}/query` and `POST /api/dataset`, which Metabase caps at 2,000 rows. `STORE` uses the export endpoints (`/api/card/{id}/query/json`, `/api/dataset/json`) and streams every row to internal storage.
+
+### Databases
+- `io.kestra.plugin.metabase.databases.SyncSchema`: Trigger an asynchronous schema synchronization (`POST /api/database/{id}/sync_schema`).
+- `io.kestra.plugin.metabase.databases.RescanValues`: Trigger an asynchronous field values rescan (`POST /api/database/{id}/rescan_values`).
+
+### Dashboards
+- `io.kestra.plugin.metabase.dashboards.List`: Retrieve the list of all Metabase dashboards.
+- `io.kestra.plugin.metabase.dashboards.Get`: Retrieve a specific dashboard with its metadata and embedded cards.
+- `io.kestra.plugin.metabase.dashboards.Trigger`: Event trigger polling for new or updated dashboards with stateful high-watermark tracking via Kestra Namespace KV Store.
+
+## Authentication
+
+Set exactly one authentication method per task, otherwise it fails:
+- **API Key** (`apiKey`): Metabase API key (recommended). **Requires Metabase v0.47 or later** (see [Metabase API Keys documentation](https://www.metabase.com/docs/latest/people-and-groups/api-keys)).
+- **Session Token** (`sessionToken`): Active session token (`X-Metabase-Session`).
+- **Username & Password** (`username`, `password`): Logs in via `POST /api/session` and deletes the session with `DELETE /api/session` when the task ends.
+
+## Example Flow
+
+```yaml
+id: metabase_pipeline
+namespace: company.analytics
+
+tasks:
+  - id: sync_warehouse
+    type: io.kestra.plugin.metabase.databases.SyncSchema
+    url: "https://metabase.example.com"
+    apiKey: "{{ secret('METABASE_API_KEY') }}"
+    databaseId: 1
+
+  - id: query_kpi
+    type: io.kestra.plugin.metabase.queries.Run
+    url: "https://metabase.example.com"
+    apiKey: "{{ secret('METABASE_API_KEY') }}"
+    databaseId: 1
+    nativeQuery: "SELECT status, count(*) AS total FROM orders GROUP BY status;"
+    fetchType: FETCH
+
+  - id: run_executive_card
+    type: io.kestra.plugin.metabase.cards.Run
+    url: "https://metabase.example.com"
+    apiKey: "{{ secret('METABASE_API_KEY') }}"
+    cardId: 42
+    fetchType: STORE
+```
 
 ## Running Kestra locally with this plugin
 
